@@ -20,31 +20,39 @@ sem_t semaphore1;
 sem_t semaphore2;
 std::fstream fs1, fs2;
 	
-void pr1( int mapped_file1){
+void pr1( char* mapped_file1, int s){
         sem_wait(&semaphore1);
         fs1.open("f1.txt", std::fstream::in |std::fstream::out | std::fstream::app);
 		if(!fs1.is_open()){
 			exit(EXIT_FAILURE);
 		}
-        std::cout<< mapped_file1<<std::endl;
+		std::string st;
+		for(int i = 0; i<s;i++){
+		    st += mapped_file1[i];
+		}
+        std::cout<< st <<std::endl;
    		int first_identificator = fork();
-   		std::cout<<"Congrats, you ar e in child2 process"<<std::endl; fflush;
+   		std::cout<<"Congrats, you are in child1 process"<<std::endl; fflush;
 		if(first_identificator == -1){
 			std::cout<<"Fork error!" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 		else if(first_identificator == 0){
-			std::cout<<"Congrats, you ar e in child2 process"<<std::endl;
+			std::cout<<"Congrats, you are in child1 process"<<std::endl;
 			fs1 << mapped_file1 << std::endl;
 			sem_post(&semaphore1);
 	}
 }
 
-void pr2( int mapped_file2){
+void pr2( char* mapped_file2, int s){
     	sem_wait(&semaphore2);
     	fs2.open("f2.txt", std::fstream::in |std::fstream::out | std::fstream::app);
 		if(!fs2.is_open()){
 			exit(EXIT_FAILURE);
+		}
+		std::string st;
+		for(int i = 0; i<s;i++){
+		    st += mapped_file2[i];
 		}
 		int second_identificator = fork();
 		if(second_identificator == -1){
@@ -60,7 +68,7 @@ void pr2( int mapped_file2){
 }
 }
 int main(){
-	std::cout <<"Congrats, you are in parent process. Please enter amount of strings: "<< std::endl;
+	std::cout <<"Congrats, you are in parent process.  "<< std::endl;
 	int fd1;
 	int fd2;
     int first_pos = 0;
@@ -72,7 +80,7 @@ int main(){
 	std::cin >> path_child1;
 	std::cout << "For second child: "<<std::endl;
 	std::cin >> path_child2;*/
-	//std::string string;
+	std::string string;
         if (sem_init(&semaphore1,1,1) < 0){
 		std::cout<<"semafore1 error"<<std::endl;
 		exit(-1);
@@ -93,18 +101,22 @@ int main(){
         
         
 
-	int *mapped_file1 = (int *)mmap(nullptr, getpagesize(),PROT_READ | PROT_WRITE,MAP_SHARED,fd1,0);
-	int *mapped_file2 = (int *)mmap(nullptr, getpagesize(),PROT_READ | PROT_WRITE,MAP_SHARED,fd2,0);
+    char *mapped_file1 = (char *)mmap(nullptr, getpagesize(), PROT_READ | PROT_WRITE, MAP_SHARED, fd1, 0); // при помощи мемори маппа отображаем mapped file на оперативную память
+    char *mapped_file2 = (char *)mmap(nullptr, getpagesize(), PROT_READ | PROT_WRITE, MAP_SHARED, fd2, 0);
+	
 	if (mapped_file1 == MAP_FAILED){
 		std::cout<<"An error with mmap function one has been detected"<<std::endl;
 		exit(EXIT_FAILURE);
+	}
+	else {
+	    std::cout<<"mapped_file is allright\n";
 	}
 	if (mapped_file2 == MAP_FAILED){
 		std::cout<<"An error with mmap function two has been detected"<<std::endl;
 		exit(EXIT_FAILURE);
 	}
-	std::cout<<"Please, enter your strings: "<<std::endl;
-	int number = 0; int i = 0;
+	std::cout<<"Please, enter your number: "<<std::endl;
+	int number = 0;
 	std::cin >> number;
 	while(number != -1){
 		
@@ -112,17 +124,28 @@ int main(){
 		//string = string + "\n";
 		if (number % 2 == 0){
 			std::cout<<"we in process 1"<<std::endl;
-			//mapped_file1[first_pos++] = number;
-			i=first_pos;
-			pr1(number);//pr1(mapped_file1[i]);
+			string = std::to_string(number);
+			std::cout<<"string  "<<string<<std::endl;
+			int l = string.size();
+			std::cout<<"size = "<<l<<std::endl;
+			for (int i = 0; i<l; ++i){
+			    fflush;std::cout<<"i = "<<i<<": ";fflush;
+			    mapped_file1[first_pos++] = string[i];
+			    //std::cout<<"mp = "<<mapped_file1<<std::endl;fflush;
+			}
+			pr1(mapped_file1, first_pos);
 			std::cout<<"the end of process 1"<<std::endl;
 		}
 		else{
 			std::cout<<"we in process 2"<<std::endl;
-			//mapped_file2[second_pos++] = number;
+			string = std::to_string(number);
+			int l = string.size();
+			for (int i = 0; i<l; i++){
+			   mapped_file2[second_pos++] = string[i];
+			}
 			//std::cout<<"mp = "<< mapped_file2[second_pos]<<std::endl;
-			i=second_pos;
-			pr2(number);//pr2(mapped_file2[second_pos]);
+			//pr2(number);
+			pr2(mapped_file2, second_pos);
 		}
 		std::cin >> number;
 	}
@@ -176,4 +199,5 @@ int main(){
 		}
 /*	}
 }*/
+
 
