@@ -32,8 +32,8 @@ int main()
     }
 
     //подготовка - инструкции, ввод логина
-    std::cout << "Wellcome to VMAI.\nTo create accounts launch ./server and insert logins.\n Than relaunch this application and enter your login.\n";
-    std::cout << "Input: login message. Example: anton\n hey, how are you?\n";
+    std::cout << "Hellow. insert logins.\n If you stop the enter logins you can enter 'end'\n";
+    std::cout << "Input: [login] [message]. for example like : one\n hey, how are you?\n";
     std::cout << "Insert your login: ";
     std::string login;
     std::vector<std::string> drafts;
