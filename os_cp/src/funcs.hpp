@@ -1,7 +1,7 @@
 #include <string>
 
 //отправить сообщение серверу в удобной форме - логин$получатель$сообщение
-void send_message_to_server(int fd, std::string curlogin, std::string user, std::string message)
+void send_message_on_server(int fd, std::string curlogin, std::string user, std::string message)
 {
     std::string text = curlogin + "$" + user + "$" + message;
     int k = text.size();
@@ -14,7 +14,7 @@ void send_message_to_server(int fd, std::string curlogin, std::string user, std:
     write(fd, messagec, k);
 }
 //отправить сообщение клиенту
-void send_message_to_client(int fd, std::string message)
+void send_message(int fd, std::string message)
 {
     std::string text = message;
     int k = text.size();
@@ -28,7 +28,7 @@ void send_message_to_client(int fd, std::string message)
 }
 
 //получить сообщение в удобной для клиента форме
-std::string recieve_message_client(int fd)
+std::string recieve_message(int fd)
 {
     int size;
     read(fd, &size, sizeof(size));

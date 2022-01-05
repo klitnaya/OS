@@ -8,19 +8,31 @@
 #include <fcntl.h>
 #include "funcs.hpp"
 #include <thread>
+#include <string>
 
 //функция приёма сообщений (для потока)
 void func(int fd_recv, std::string login)
 {
     while (1)
     {
-        std::string reply = recieve_message_client(fd_recv);
+        std::string reply = recieve_message(fd_recv);
         std::cout << reply << "\n";
         std::cout.flush();
         std::cout << login << ">";
         std::cout.flush();
     }
 }
+
+//функция получение адреса для вывода черновика
+std::string rec(std::string s){
+	std::string str;
+	for(int i = 0; i < s.length()-1; i++){
+		str.push_back(s[i+1]);
+	}
+	return str;
+}
+
+
 int main()
 {
     //подключение к входному FIFO сервера
@@ -67,16 +79,28 @@ int main()
         if (adressee == "send_draft"){
             std::string recipient;
             std::getline(std::cin,recipient);
+	    std::string recipien = rec(recipient);
+	    //std::cout<<"we there!!drafts.size()="<<drafts.size()<<std::endl;
             for(int i = 0; i < drafts.size(); i++){
-                send_message_to_server(fd_send, login, recipient, drafts[i]);
+         	//std::cout<<"i= "<<i<<" drafts[i] = "<<drafts[i]<<std::endl;
+		std::cout<<"adr= "<<recipien<<std::endl;
+                send_message_on_server(fd_send, login, recipien, drafts[i]); //login, drafts[i]);//recipient, drafts[i]);
             }
         }
         else{
-            if (adressee == "quit")
+            if (adressee == "quit"){
+		for(int i = 0; i < drafts.size(); i++){
+			send_message_on_server(fd_send, login, login, drafts[i]);
+		}
                 break;
+	    }
             std::getline(std::cin, message);
-            send_message_to_server(fd_send, login, adressee, message);
+	    //std::cout<<"adress= "<<adressee<<std::endl;
+            send_message_on_server(fd_send, login, adressee, message);
         }
-    }}
+   
+       	}
+    }
+
     thr_recieve.detach();
 }

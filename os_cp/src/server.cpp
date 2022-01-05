@@ -29,13 +29,10 @@ int main()
     std::string login;
 
     //ввод логинов
-    std::cout << "Enter all user's logins. Insert 'end' to stop:\n";
+    std::cout << "Enter all user's logins. insert 'end' to stop:\n";
     while (login != "end")
     {
         std::cin >> login; 
-        //std::vector<std::string> vec;
-        //vec.push_back(login);
-        //draft.push_back(vec);
         if (in(logins, login) == -1){
             logins.push_back(login);
 	}
@@ -43,28 +40,33 @@ int main()
             std::cout << "already exists!";
     }
 
+    //создание входного FIFO
+    if (mkfifo("input", 0666) == -1){
+	if (errno != EEXIST){
+		perror("input");
+          exit(1);
+	}
+    }
+
+
     //создание выходных FIFO для всех логинов
     for (int i = 0; i < logins.size(); ++i)
     {
-        if (mkfifo(logins[i].c_str(), 0777) == -1)
-        {
+        if (mkfifo(logins[i].c_str(), 0777) == -1) {
+                perror(logins[i].c_str());
+		//std::cout<<errno<<std::endl;
+                //std::cout<<"errno EEXIST "<< EEXIST<<std::endl;
             if (errno != EEXIST)
             {
-                std::cout << "FIFO WAS NOT CREATED";
+                //std::cout << "FIFO WAS NOT CREATED";
                 exit(1);
             }
         }
     }
-    //создание входного FIFO
-    if (mkfifo("input", 0777) == -1)
-    {
-        std::cout << "MAIN INPUT FIFO WAS NOT CREATED";
-        exit(1);
-    }
     int fd_recv = open("input", O_RDWR);
     if (fd_recv == -1)
     {
-        std::cout << "INPUT FIFO WAS NOT OPENED";
+        std::cout << "inPUT FIFO WAS NOT OPENED";
         exit(1);
     }
 
@@ -85,15 +87,15 @@ int main()
         std::string rec_log = extract_addressee(message); //получатель
         std::string rcvd_message = extract_message(message);    //сообщение
         int repl_fd = in(logins, rec_log);                //id получателя
-        int fd_usr = in(logins, my_log);                      //id отправителя
-        int pos = -1;
+        int fd_usr = in(logins, my_log);   	//id отправителя
+	//std::cout<<"log= "<<rec_log<<std::endl;
             if (in(logins, rec_log) == -1)
             {
-                send_message_to_client(fd[fd_usr], "Login does not exists!\n");
+                send_message(fd[fd_usr], "Login does not exists!\n");
             }
             else
             {
-                send_message_to_client(fd[repl_fd], rcvd_message);
+                send_message(fd[repl_fd], rcvd_message);
             }
         }
 }
